@@ -1,5 +1,6 @@
 package api;
 
+import api.controller.AuthController;
 import api.controller.HealthController;
 import static spark.Spark.port;
 
@@ -10,5 +11,7 @@ public class Cards4PlayApi {
 
         HealthController healthController = new HealthController();
         healthController.registrarRutas();
+        service.AuthService auth = new service.AuthService(System.getenv("CARDS4PLAY_ADMIN_PASSWORD"));
+        new AuthController(auth).registrarRutas();
     }
 }
