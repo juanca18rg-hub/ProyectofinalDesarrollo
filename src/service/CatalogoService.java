@@ -16,6 +16,10 @@ public class CatalogoService {
         return dueniosBooster.get(id);
     }
 
+    synchronized void asignarBooster(String id, String clienteId) {
+        dueniosBooster.put(id, clienteId);
+    }
+
     public synchronized void agregar(Producto producto) {
         inventario.agregar(producto);
     }
