@@ -3,6 +3,7 @@ package api;
 import api.controller.AuthController;
 import api.controller.UsuarioController;
 import api.controller.ProductoController;
+import api.controller.BoosterController;
 import api.controller.HealthController;
 import static spark.Spark.port;
 
@@ -18,5 +19,6 @@ public class Cards4PlayApi {
         new UsuarioController(auth).registrarRutas();
         service.CatalogoService catalogo = new service.CatalogoService();
         new ProductoController(auth, catalogo).registrarRutas();
+        new BoosterController(auth, catalogo).registrarRutas();
     }
 }
