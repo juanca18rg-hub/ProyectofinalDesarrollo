@@ -6,6 +6,7 @@ import api.controller.ProductoController;
 import api.controller.BoosterController;
 import api.controller.InventarioController;
 import api.controller.CompraController;
+import api.controller.TorneoController;
 import api.controller.HealthController;
 import static spark.Spark.port;
 
@@ -24,5 +25,6 @@ public class Cards4PlayApi {
         new BoosterController(auth, catalogo).registrarRutas();
         new InventarioController(auth, catalogo).registrarRutas();
         new CompraController(auth, catalogo).registrarRutas();
+        new TorneoController(auth).registrarRutas();
     }
 }
