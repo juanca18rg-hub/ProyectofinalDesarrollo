@@ -1,5 +1,10 @@
 package api.controller;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import model.Booster;
 import model.Compra;
 import model.DetalleCompra;
@@ -9,12 +14,6 @@ import model.Usuario;
 import service.AuthService;
 import service.CatalogoService;
 import service.CompraService;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 import static spark.Spark.get;
 import static spark.Spark.post;
 
@@ -83,3 +82,4 @@ public class CompraController {
         int cantidad;
     }
 }
+// -------------------
