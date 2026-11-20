@@ -1,5 +1,8 @@
 package api.controller;
 
+import java.util.Map;
+import java.util.UUID;
+
 import model.Accesorio;
 import model.Carta;
 import model.Producto;
@@ -10,10 +13,6 @@ import service.AuthService;
 import service.CatalogoService;
 import spark.Request;
 import spark.Response;
-
-import java.util.Map;
-import java.util.UUID;
-
 import static spark.Spark.post;
 
 public class ProductoController {

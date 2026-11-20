@@ -1,16 +1,15 @@
 package api.controller;
 
-import model.Booster;
-import model.Carta;
-import model.Producto;
-import service.AuthService;
-import service.CatalogoService;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import model.Booster;
+import model.Carta;
+import model.Producto;
+import service.AuthService;
+import service.CatalogoService;
 import static spark.Spark.get;
 
 public class InventarioController {
@@ -58,4 +57,4 @@ public class InventarioController {
         }
         return resultado;
     }
-}
+}//------------------------------
