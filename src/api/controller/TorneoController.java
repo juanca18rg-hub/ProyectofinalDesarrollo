@@ -1,11 +1,5 @@
 package api.controller;
 
-import model.Rol;
-import model.Torneo;
-import model.Usuario;
-import service.AuthService;
-import service.TorneoService;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -13,6 +7,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import model.Rol;
+import model.Torneo;
+import model.Usuario;
+import service.AuthService;
+import service.TorneoService;
 import static spark.Spark.get;
 import static spark.Spark.post;
 
@@ -77,3 +76,4 @@ public class TorneoController {
         int maxParticipantes;
     }
 }
+//-------------------------
