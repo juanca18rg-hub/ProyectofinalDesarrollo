@@ -1,55 +1,59 @@
 package service;
 
 import model.Administrador;
+import model.Rol;
 import model.Usuario;
+import repository.UsuarioRepository;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 public class AuthService {
-    private final List<Usuario> usuarios = new ArrayList<>();
+    private final UsuarioRepository usuarios;
     private final Map<String, Usuario> sesiones = new HashMap<>();
 
     public AuthService(String claveAdmin) {
-        if (claveAdmin != null && !claveAdmin.isBlank()) {
-            usuarios.add(new Administrador("admin", "admin", claveAdmin));
+        usuarios = new UsuarioRepository();
+        prepararAdministrador(claveAdmin);
+    }
+
+    private void prepararAdministrador(String claveConfigurada) {
+        Usuario existente = usuarios.buscarPorUsername("admin").orElse(null);
+        if (existente != null) {
+            if (existente.getRol() != Rol.ADMIN) {
+                throw new IllegalStateException("El nombre admin pertenece a una cuenta de cliente");
+            }
+            return;
+        }
+
+        boolean generarClave = claveConfigurada == null || claveConfigurada.isBlank();
+        String clave = generarClave ? UUID.randomUUID().toString() : claveConfigurada;
+        usuarios.guardar(new Administrador("admin", "admin", clave));
+        if (generarClave) {
+            System.out.println("Clave inicial de admin (solo en este primer arranque): " + clave);
         }
     }
 
     public synchronized String iniciarSesion(String username, String password) {
-        for (Usuario usuario : usuarios) {
-            if (usuario.getUsername().equalsIgnoreCase(username) && usuario.autenticar(password)) {
-                String token = UUID.randomUUID().toString();
-                sesiones.put(token, usuario);
-                return token;
-            }
+        Usuario usuario = usuarios.buscarPorUsername(username).orElse(null);
+        if (usuario == null || !usuario.autenticar(password)) {
+            return null;
         }
-        return null;
+        String token = UUID.randomUUID().toString();
+        sesiones.put(token, usuario);
+        return token;
     }
 
     public synchronized Usuario buscarSesion(String token) {
         return sesiones.get(token);
     }
 
-    public synchronized Usuario buscarPorId(String id) {
-        for (Usuario usuario : usuarios) {
-            if (usuario.getId().equals(id)) {
-                return usuario;
-            }
-        }
-        return null;
+    public Usuario buscarPorId(String id) {
+        return usuarios.buscarPorId(id).orElse(null);
     }
 
-    public synchronized void registrar(Usuario nuevo) {
-        for (Usuario usuario : usuarios) {
-            if (usuario.getUsername().equalsIgnoreCase(nuevo.getUsername())
-                    || usuario.getId().equals(nuevo.getId())) {
-                throw new IllegalStateException("El usuario ya existe");
-            }
-        }
-        usuarios.add(nuevo);
+    public void registrar(Usuario nuevo) {
+        usuarios.guardar(nuevo);
     }
 }

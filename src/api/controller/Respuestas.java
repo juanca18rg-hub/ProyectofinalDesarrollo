@@ -8,6 +8,7 @@ import service.AuthService;
 import spark.Request;
 import spark.Response;
 
+import java.io.UncheckedIOException;
 import java.time.DateTimeException;
 import java.util.Map;
 
@@ -59,6 +60,8 @@ final class Respuestas {
     }
 
     static void registrarErrores() {
+        exception(UncheckedIOException.class, (e, req, res) ->
+                res.body(json(res, 500, Map.of("error", "No se pudo guardar el archivo de usuarios"))));
         exception(JsonParseException.class, (e, req, res) ->
                 res.body(json(res, 400, Map.of("error", "JSON inválido"))));
         exception(IllegalArgumentException.class, (e, req, res) ->
