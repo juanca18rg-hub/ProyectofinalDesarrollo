@@ -1,0 +1,11 @@
+.git
+.gitignore
+target/
+.idea/
+.vscode/
+*.iml
+*.pdf
+README.md
+Dockerfile
+.dockerignore
+data/
