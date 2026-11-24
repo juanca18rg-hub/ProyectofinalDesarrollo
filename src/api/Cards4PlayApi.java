@@ -8,16 +8,18 @@ import api.controller.InventarioController;
 import api.controller.CompraController;
 import api.controller.TorneoController;
 import api.controller.HealthController;
+import service.AuthService;
 import static spark.Spark.port;
 
 public class Cards4PlayApi {
 
     public static void iniciar() {
-        port(4567);
+        AuthService auth = new AuthService(System.getenv("CARDS4PLAY_ADMIN_PASSWORD"));
+        String puerto = System.getenv("PORT");
+        port(puerto == null || puerto.isBlank() ? 4567 : Integer.parseInt(puerto));
 
         HealthController healthController = new HealthController();
         healthController.registrarRutas();
-        service.AuthService auth = new service.AuthService(System.getenv("CARDS4PLAY_ADMIN_PASSWORD"));
         new AuthController(auth).registrarRutas();
         new UsuarioController(auth).registrarRutas();
         service.CatalogoService catalogo = new service.CatalogoService();

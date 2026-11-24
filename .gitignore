@@ -5,3 +5,5 @@ target/
 .DS_Store
 *.class
 .env
+/data/usuarios.json
+/data/usuarios-*.tmp

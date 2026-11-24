@@ -1,113 +1,129 @@
 package repository;
 
-import com.google.gson.*;
-import com.google.gson.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import model.Administrador;
+import model.ClaveUsuario;
 import model.Cliente;
 import model.Rol;
 import model.Usuario;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.lang.reflect.Type;
-import java.nio.charset.StandardCharsets;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class UsuarioRepository {
+    private final Path archivo;
+    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private final List<Usuario> usuarios = new ArrayList<>();
 
-    private final Path archivo = Path.of("data", "usuarios.json");
+    public UsuarioRepository() {
+        this(Path.of("data", "usuarios.json"));
+    }
 
-    private final Type tipoLista = new TypeToken<List<Usuario>>() {}.getType();
+    public UsuarioRepository(Path archivo) {
+        this.archivo = archivo.toAbsolutePath();
+        cargar();
+    }
 
-    private final Gson gson = new GsonBuilder()
-            .setPrettyPrinting()
-            .registerTypeAdapter(Usuario.class, new UsuarioAdapter())
-            .create();
-
-    public Optional<Usuario> buscarPorUsername(String username) {
-        return cargarTodos().stream()
+    public synchronized Optional<Usuario> buscarPorUsername(String username) {
+        return usuarios.stream()
                 .filter(usuario -> usuario.getUsername().equalsIgnoreCase(username))
                 .findFirst();
     }
 
-    public void guardar(Usuario nuevoUsuario) {
-        List<Usuario> usuarios = cargarTodos();
-
-        boolean yaExiste = usuarios.stream().anyMatch(usuario ->
-                usuario.getId().equals(nuevoUsuario.getId())
-                        || usuario.getUsername().equalsIgnoreCase(nuevoUsuario.getUsername())
-        );
-
-        if (yaExiste) {
-            throw new IllegalArgumentException("Ya existe un usuario con ese ID o nombre de usuario");
-        }
-
-        usuarios.add(nuevoUsuario);
-        escribirTodos(usuarios);
+    public synchronized Optional<Usuario> buscarPorId(String id) {
+        return usuarios.stream().filter(usuario -> usuario.getId().equals(id)).findFirst();
     }
 
-    private List<Usuario> cargarTodos() {
-        try {
-            Files.createDirectories(archivo.getParent());
+    public synchronized void guardar(Usuario nuevo) {
+        if (existe(nuevo)) {
+            throw new IllegalStateException("El usuario ya existe");
+        }
+        List<Usuario> actualizados = new ArrayList<>(usuarios);
+        actualizados.add(nuevo);
+        escribir(actualizados);
+        usuarios.add(nuevo);
+    }
 
-            if (Files.notExists(archivo)) {
-                return new ArrayList<>();
-            }
+    private boolean existe(Usuario usuario) {
+        return buscarPorId(usuario.getId()).isPresent()
+                || buscarPorUsername(usuario.getUsername()).isPresent();
+    }
 
-            try (Reader reader = Files.newBufferedReader(archivo, StandardCharsets.UTF_8)) {
-                List<Usuario> usuarios = gson.fromJson(reader, tipoLista);
-                return usuarios == null ? new ArrayList<>() : usuarios;
+    private void cargar() {
+        if (Files.notExists(archivo)) {
+            return;
+        }
+
+        boolean hayClavesAntiguas = false;
+        try (Reader entrada = Files.newBufferedReader(archivo)) {
+            for (JsonElement registro : JsonParser.parseReader(entrada).getAsJsonArray()) {
+                JsonObject datos = registro.getAsJsonObject();
+                hayClavesAntiguas = hayClavesAntiguas || datos.has("password");
+                Usuario usuario = leerUsuario(datos);
+                if (existe(usuario)) {
+                    throw new IllegalArgumentException("Hay cuentas duplicadas en el archivo de usuarios");
+                }
+                usuarios.add(usuario);
             }
         } catch (IOException e) {
-            throw new IllegalStateException("No se pudieron leer los usuarios", e);
+            throw new UncheckedIOException("No se pudo leer " + archivo, e);
+        } catch (RuntimeException e) {
+            throw new IllegalStateException("El archivo de usuarios contiene datos inválidos: " + archivo, e);
+        }
+        if (hayClavesAntiguas) {
+            escribir(usuarios);
         }
     }
 
-    private void escribirTodos(List<Usuario> usuarios) {
+    private Usuario leerUsuario(JsonObject datos) {
+        if (!datos.has("rol") && datos.has("tipo")) {
+            datos.add("rol", datos.get("tipo"));
+        }
+        if (datos.has("password") && !datos.has("clave")) {
+            ClaveUsuario clave = new ClaveUsuario(datos.get("password").getAsString());
+            datos.add("clave", gson.toJsonTree(clave));
+        }
+        Rol rol = Rol.valueOf(datos.get("rol").getAsString());
+        List<String> listas = rol == Rol.ADMIN
+                ? List.of("productosRegistradosIds", "torneosCreadosIds") : List.of("comprasIds");
+        for (String lista : listas) {
+            if (!datos.has(lista) || datos.get(lista).isJsonNull()) {
+                datos.add(lista, new JsonArray());
+            }
+        }
+        Usuario usuario = switch (rol) {
+            case ADMIN -> gson.fromJson(datos, Administrador.class);
+            case CLIENTE -> gson.fromJson(datos, Cliente.class);
+        };
+        usuario.validar();
+        return usuario;
+    }
+
+    private void escribir(List<Usuario> lista) {
         try {
             Files.createDirectories(archivo.getParent());
-            Files.writeString(
-                    archivo,
-                    gson.toJson(usuarios),
-                    StandardCharsets.UTF_8
-            );
+            Path temporal = Files.createTempFile(archivo.getParent(), "usuarios-", ".tmp");
+            try {
+                Files.writeString(temporal, gson.toJson(lista));
+                Files.move(temporal, archivo, StandardCopyOption.ATOMIC_MOVE,
+                        StandardCopyOption.REPLACE_EXISTING);
+            } finally {
+                Files.deleteIfExists(temporal);
+            }
         } catch (IOException e) {
-            throw new IllegalStateException("No se pudieron guardar los usuarios", e);
-        }
-    }
-
-    private static class UsuarioAdapter
-            implements JsonSerializer<Usuario>, JsonDeserializer<Usuario> {
-
-        @Override
-        public JsonElement serialize(
-                Usuario usuario,
-                Type tipo,
-                JsonSerializationContext contexto
-        ) {
-            JsonObject json = contexto.serialize(usuario, usuario.getClass()).getAsJsonObject();
-            json.addProperty("tipo", usuario.getRol().name());
-            return json;
-        }
-
-        @Override
-        public Usuario deserialize(
-                JsonElement elemento,
-                Type tipo,
-                JsonDeserializationContext contexto
-        ) throws JsonParseException {
-            JsonObject json = elemento.getAsJsonObject();
-            String tipoUsuario = json.get("tipo").getAsString();
-            json.remove("tipo");
-
-            return switch (Rol.valueOf(tipoUsuario)) {
-                case ADMIN -> contexto.deserialize(json, Administrador.class);
-                case CLIENTE -> contexto.deserialize(json, Cliente.class);
-            };
+            throw new UncheckedIOException("No se pudo guardar el archivo de usuarios", e);
         }
     }
 }
