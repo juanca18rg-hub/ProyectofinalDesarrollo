@@ -21,10 +21,11 @@ public class Cards4PlayApi {
         new AuthController(auth).registrarRutas();
         new UsuarioController(auth).registrarRutas();
         service.CatalogoService catalogo = new service.CatalogoService();
+        service.TasaService tasas = new service.TasaService();
         new ProductoController(auth, catalogo).registrarRutas();
         new BoosterController(auth, catalogo).registrarRutas();
-        new InventarioController(auth, catalogo).registrarRutas();
-        new CompraController(auth, catalogo).registrarRutas();
+        new InventarioController(auth, catalogo, tasas).registrarRutas();
+        new CompraController(auth, catalogo, tasas).registrarRutas();
         new TorneoController(auth).registrarRutas();
     }
 }

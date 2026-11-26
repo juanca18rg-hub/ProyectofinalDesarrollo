@@ -14,6 +14,7 @@ import model.Usuario;
 import service.AuthService;
 import service.CatalogoService;
 import service.CompraService;
+import service.TasaService;
 import static spark.Spark.get;
 import static spark.Spark.post;
 
@@ -22,10 +23,10 @@ public class CompraController {
     private final CatalogoService catalogo;
     private final CompraService compras;
 
-    public CompraController(AuthService auth, CatalogoService catalogo) {
+    public CompraController(AuthService auth, CatalogoService catalogo, TasaService tasas) {
         this.auth = auth;
         this.catalogo = catalogo;
-        this.compras = new CompraService(catalogo);
+        this.compras = new CompraService(catalogo, tasas);
     }
 
     public void registrarRutas() {
