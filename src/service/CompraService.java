@@ -3,8 +3,8 @@ package service;
 import model.Booster;
 import model.Compra;
 import model.DetalleCompra;
-import model.FuenteTasa;
 import model.Producto;
+import model.TasaCambio;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -13,16 +13,21 @@ import java.util.UUID;
 
 public class CompraService {
     private final CatalogoService catalogo;
+    private final TasaService tasas;
     private final List<Compra> compras = new ArrayList<>();
 
-    public CompraService(CatalogoService catalogo) {
+    public CompraService(CatalogoService catalogo, TasaService tasas) {
         this.catalogo = catalogo;
+        this.tasas = tasas;
     }
 
     public Compra registrar(String clienteId, Producto producto, int cantidad) {
         if (cantidad <= 0) {
             throw new IllegalArgumentException("La cantidad debe ser mayor que cero");
         }
+
+        // La tasa se consulta antes de bloquear el catálogo: la API externa puede tardar hasta su timeout.
+        TasaCambio tasa = tasas.obtenerTasa();
 
         synchronized (catalogo) {
             if (producto instanceof Booster) {
@@ -34,12 +39,12 @@ public class CompraService {
                 }
             }
 
-            String configuracion = System.getenv("TASA_DEFECTO");
-            double tasa = configuracion == null ? 4000 : Double.parseDouble(configuracion);
+            // El precio en COP queda congelado con la tasa del momento de la compra.
+            double precioCop = Math.round(producto.getPrecioCop(tasa.getValor()) * 100.0) / 100.0;
             Compra compra = new Compra(UUID.randomUUID().toString(), clienteId,
-                    LocalDateTime.now(), FuenteTasa.DEFECTO);
+                    LocalDateTime.now(), tasa.getFuente());
             compra.agregarDetalle(new DetalleCompra(producto.getId(), cantidad,
-                    producto.getPrecioUsd(), producto.getPrecioCop(tasa)));
+                    producto.getPrecioUsd(), precioCop));
             compras.add(compra);
             if (producto instanceof Booster) {
                 catalogo.asignarBooster(producto.getId(), clienteId);

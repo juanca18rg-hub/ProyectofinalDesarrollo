@@ -7,12 +7,13 @@ import model.Rareza;
 import service.BoosterService;
 import service.CatalogoService;
 import service.CompraService;
+import service.TasaService;
 
 public class DemoTienda {
     public static void main(String[] args) {
         CatalogoService catalogo = new CatalogoService();
         BoosterService boosters = new BoosterService(catalogo);
-        CompraService compras = new CompraService(catalogo);
+        CompraService compras = new CompraService(catalogo, new TasaService());
 
         // 1. Registrar cartas en el catálogo
         catalogo.agregar(new Carta("C1", "Dragón", 3.0, Rareza.R));

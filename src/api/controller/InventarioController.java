@@ -8,17 +8,21 @@ import java.util.Map;
 import model.Booster;
 import model.Carta;
 import model.Producto;
+import model.TasaCambio;
 import service.AuthService;
 import service.CatalogoService;
+import service.TasaService;
 import static spark.Spark.get;
 
 public class InventarioController {
     private final AuthService auth;
     private final CatalogoService catalogo;
+    private final TasaService tasas;
 
-    public InventarioController(AuthService auth, CatalogoService catalogo) {
+    public InventarioController(AuthService auth, CatalogoService catalogo, TasaService tasas) {
         this.auth = auth;
         this.catalogo = catalogo;
+        this.tasas = tasas;
     }
 
     public void registrarRutas() {
@@ -34,6 +38,8 @@ public class InventarioController {
 
     private List<Map<String, Object>> listar(boolean soloBoosters) {
         List<Map<String, Object>> resultado = new ArrayList<>();
+        // Una sola consulta de la tasa para todo el listado.
+        TasaCambio tasa = tasas.obtenerTasa();
         synchronized (catalogo) {
             for (Producto producto : catalogo.listar()) {
                 boolean esBooster = producto instanceof Booster;
@@ -49,6 +55,8 @@ public class InventarioController {
                 item.put("nombre", producto.getNombre());
                 item.put("tipo", producto.getClass().getSimpleName());
                 item.put("precioUsd", producto.getPrecioUsd());
+                item.put("precioCop", Math.round(producto.getPrecioCop(tasa.getValor()) * 100.0) / 100.0);
+                item.put("fuenteTasa", tasa.getFuente());
                 if (producto instanceof Carta carta) {
                     item.put("rareza", carta.getRareza());
                 }
