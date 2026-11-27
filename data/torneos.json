@@ -1,0 +1,14 @@
+[
+  {
+    "id": "6c10a4a8-42c6-4a5c-adaf-445dcec38e9c",
+    "nombre": "Torneo Pokemon Cards4Play - 1795736956985",
+    "inicioInscripciones": "2026-11-25T00:00",
+    "finInscripciones": "2026-12-05T23:59:59",
+    "fechaEvento": "2026-12-06",
+    "maxParticipantes": 2,
+    "participantesIds": [
+      "983d454e-b2eb-41f3-bbdd-7c8965aca183",
+      "58085f24-3a31-459f-b634-029bdf3c2332"
+    ]
+  }
+]

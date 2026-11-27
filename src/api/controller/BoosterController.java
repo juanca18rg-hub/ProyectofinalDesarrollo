@@ -50,8 +50,15 @@ public class BoosterController {
                 Respuestas.error(res, 403, "Solo el comprador puede abrir el booster");
             }
 
-            Booster booster = (Booster) producto;
-            return Respuestas.json(res, 200, Map.of("cartas", booster.abrir()));
+            return Respuestas.json(
+        res,
+        200,
+        Map.of("cartas",
+                catalogo.abrirBooster(
+                        producto.getId(),
+                        cliente.getId()
+                ))
+);
         }
     }
 

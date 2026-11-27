@@ -17,6 +17,7 @@ import service.CompraService;
 import service.TasaService;
 import static spark.Spark.get;
 import static spark.Spark.post;
+import repository.CompraRepository;
 
 public class CompraController {
     private final AuthService auth;
@@ -26,8 +27,11 @@ public class CompraController {
     public CompraController(AuthService auth, CatalogoService catalogo, TasaService tasas) {
         this.auth = auth;
         this.catalogo = catalogo;
-        this.compras = new CompraService(catalogo, tasas);
-    }
+this.compras = new CompraService(
+        catalogo,
+        tasas,
+        new CompraRepository()
+);    }
 
     public void registrarRutas() {
         post("/compras", (req, res) -> {

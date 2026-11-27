@@ -32,6 +32,42 @@ public class Torneo {
         this.maxParticipantes = maxParticipantes;
     }
 
+public Torneo(String id, String nombre,
+              LocalDateTime inicioInscripciones,
+              LocalDateTime finInscripciones,
+              LocalDate fechaEvento,
+              int maxParticipantes,
+              List<String> participantesIds) {
+
+    this(id, nombre, inicioInscripciones,
+            finInscripciones, fechaEvento, maxParticipantes);
+
+    if (participantesIds == null) {
+        throw new IllegalArgumentException(
+                "La lista de participantes es obligatoria");
+    }
+
+    if (participantesIds.size() > maxParticipantes) {
+        throw new IllegalArgumentException(
+                "Se supera el cupo del torneo");
+    }
+
+    for (String participante : participantesIds) {
+
+        if (participante == null || participante.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Participante invalido");
+        }
+
+        if (this.participantesIds.contains(participante)) {
+            throw new IllegalArgumentException(
+                    "Participante duplicado");
+        }
+
+        this.participantesIds.add(participante);
+    }
+}
+
     public void inscribir(String clienteId, LocalDateTime fechaActual) {
         if (clienteId == null || clienteId.isBlank()) throw new IllegalArgumentException("El cliente es obligatorio");
         if (fechaActual.isBefore(inicioInscripciones) || fechaActual.isAfter(finInscripciones)) {

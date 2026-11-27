@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import repository.TorneoRepository;
 import model.Rol;
 import model.Torneo;
 import model.Usuario;
@@ -17,8 +18,8 @@ import static spark.Spark.post;
 
 public class TorneoController {
     private final AuthService auth;
-    private final TorneoService torneos = new TorneoService();
-
+private final TorneoService torneos =
+        new TorneoService(new TorneoRepository());
     public TorneoController(AuthService auth) {
         this.auth = auth;
     }
@@ -60,13 +61,34 @@ public class TorneoController {
         });
     }
 
-    private Map<String, Object> verTorneo(Torneo torneo) {
-        return Map.of("id", torneo.getId(), "nombre", torneo.getNombre(),
-                "fechaEvento", torneo.getFechaEvento().toString(),
-                "inicioInscripciones", torneo.getInicioInscripciones().toString(),
-                "finInscripciones", torneo.getFinInscripciones().toString(),
-                "maxParticipantes", torneo.getMaxParticipantes());
-    }
+   
+private Map<String, Object> verTorneo(Torneo torneo) {
+
+    return Map.of(
+            "id", torneo.getId(),
+            "nombre", torneo.getNombre(),
+
+            "fechaEvento",
+            torneo.getFechaEvento().toString(),
+
+            "inicioInscripciones",
+            torneo.getInicioInscripciones().toString(),
+
+            "finInscripciones",
+            torneo.getFinInscripciones().toString(),
+
+            "maxParticipantes",
+            torneo.getMaxParticipantes(),
+
+            "participantesInscritos",
+            torneo.getParticipantesIds().size(),
+
+            "cuposDisponibles",
+            torneo.getMaxParticipantes()
+                    - torneo.getParticipantesIds().size()
+    );
+}
+
 
     private static class DatosTorneo {
         String nombre;
