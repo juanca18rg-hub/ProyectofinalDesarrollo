@@ -1,34 +1,145 @@
 # Cards4Play API
 
-Base Maven para desarrollar el backend del proyecto final en Java 17, siguiendo la estructura sencilla del taller de Tienda (`src/model`, `src/service`, etc.).
+## Descripción del proyecto
 
-## Estructura inicial
+Cards4Play es una API REST orientada a la gestión de una tienda de cartas coleccionables, accesorios, productos sellados, boosters y torneos competitivos.
 
-- `src/model`: entidades, enumeraciones y reglas del dominio.
-- `src/service`: lógica de aplicación que iremos implementando.
-- `src/repository`: persistencia JSON en archivos.
-- `src/api`: rutas REST con Spark.
+El proyecto aplica los principios de programación orientada a objetos, arquitectura por capas, integración de servicios externos y persistencia de información mediante archivos JSON.
+
+## Tecnologías utilizadas
+
+- Java 17
+- Maven
+- Spark Java 2.9.4
+- Gson 2.10.1
+- SLF4J
+- Docker
+- Railway
+- Postman
+- Git y GitHub
+
+## Funcionalidades principales
+
+- Autenticación mediante tokens.
+- Gestión de administradores y clientes.
+- Registro y consulta de productos.
+- Conversión de precios USD a COP mediante una API externa.
+- Generación, compra y apertura de boosters.
+- Registro e historial de compras.
+- Creación de torneos e inscripción de participantes.
+- Validación de cupos e inscripciones duplicadas.
+- Persistencia de información después del reinicio de la aplicación.
+
+## Arquitectura del proyecto
+
+- `src/model`: entidades, enumeraciones y reglas del negocio.
+- `src/service`: lógica de aplicación.
+- `src/repository`: almacenamiento y recuperación de información.
+- `src/api`: controladores y endpoints REST.
 - `src/util`: utilidades compartidas.
-- `data`: archivos JSON persistentes; no se deben subir datos sensibles.
+- `data`: archivos JSON persistentes.
 
-## Dependencias
+## Endpoints de la API
 
-Maven descarga Spark Java 2.9.4 y Gson 2.10.1. Java 17 es la versión de compilación configurada. En VS Code, abre esta carpeta como proyecto Java/Maven y carga el proyecto Maven cuando aparezca la notificación.
+| Método | Endpoint | Función |
+|---|---|---|
+| GET | /health | Verificar disponibilidad |
+| POST | /auth/login | Iniciar sesión |
+| POST | /clientes | Registrar cliente |
+| GET | /clientes/:id | Consultar cliente |
+| POST | /productos/cartas | Registrar carta |
+| POST | /productos/accesorios | Registrar accesorio |
+| POST | /productos/sellados | Registrar producto sellado |
+| GET | /productos | Consultar productos |
+| POST | /boosters | Crear booster |
+| GET | /boosters/disponibles | Consultar boosters disponibles |
+| POST | /boosters/:id/abrir | Abrir booster |
+| POST | /compras | Registrar compra |
+| GET | /clientes/:id/compras | Consultar historial |
+| POST | /torneos | Crear torneo |
+| GET | /torneos | Consultar torneos |
+| POST | /torneos/:id/inscripciones | Inscribir participante |
 
-## Nota de diseño
+## Persistencia de datos
 
-El archivo del proyecto final pide persistencia JSON. El taller de Tienda sirve como guía para Maven, Spark, Gson y Docker, pero su persistencia de texto separado por comas no se debe copiar para Cards4Play.
+El sistema almacena su información mediante cuatro archivos JSON:
 
-## Persistencia de usuarios
+- usuarios.json
+- productos.json
+- compras.json
+- torneos.json
 
-Abre el proyecto en VS Code y usa **Run Java** en `src/api/Main.java`. La API escucha en el puerto 4567 por defecto. Al registrar un cliente, `UsuarioRepository` guarda su cuenta en `data/usuarios.json`. Al arrancar de nuevo desde la misma carpeta, `AuthService` puede autenticar a ese cliente con su contraseña. Los tokens duran hasta que se cierre la aplicación.
+Los repositorios permiten recuperar los datos después del reinicio de la aplicación y utilizan archivos temporales para realizar escrituras mediante reemplazo atómico.
 
-La primera vez se crea el usuario `admin`. Si defines `CARDS4PLAY_ADMIN_PASSWORD` antes de iniciar la API, se usa esa contraseña. Si dejas la variable vacía, la consola muestra una clave inicial generada una sola vez. Cuando la cuenta ya existe, conserva su contraseña. En un servidor compartido, configura la variable antes del primer inicio.
+En Railway se utiliza un volumen persistente de 500 MB montado en `/app/data`.
 
-El archivo guarda una sal aleatoria y una huella de la contraseña calculada con PBKDF2. Si ya tienes cuentas del formato anterior con el campo `password`, la aplicación las convierte al iniciar y conserva sus identificadores y roles.
+## Seguridad
 
-Puedes probar este bloque en la terminal desde la carpeta del proyecto. La prueba utiliza Maven, Java y Python 3. Arranca y detiene la API con datos temporales y prueba el login antes y después del reinicio.
+- Autenticación mediante tokens.
+- Control de acceso según el rol del usuario.
+- Contraseñas protegidas mediante PBKDF2 y sales aleatorias.
+- Credenciales configuradas mediante variables de entorno.
+- Validación de propiedad de compras y boosters.
+
+Los tokens de autenticación se invalidan al reiniciar la aplicación.
+
+## Ejecución local
+
+Requisitos: Java 17 o superior y Maven.
+
+Compilar el proyecto:
 
 ```bash
-python3 pruebas/persistencia_usuarios.py
+mvn clean package
+mvn dependency:copy-dependencies
 ```
+
+Ejecutar en Windows:
+
+```powershell
+java -cp "target/classes;target/dependency/*" api.Main
+```
+
+Ejecutar en Linux o macOS:
+
+```bash
+java -cp "target/classes:target/dependency/*" api.Main
+```
+
+URL local:
+
+http://localhost:4567
+
+## Variables de entorno
+
+| Variable | Descripción |
+|---|---|
+| PORT | Puerto de la aplicación |
+| TASA_DEFECTO | Tasa de conversión alternativa |
+| CARDS4PLAY_ADMIN_PASSWORD | Contraseña inicial del administrador |
+
+## Despliegue en producción
+
+El proyecto se encuentra desplegado mediante Docker en Railway.
+
+**URL pública:**
+
+https://cards4play-api-production-ae03e318.up.railway.app
+
+**Verificación de disponibilidad:**
+
+https://cards4play-api-production-ae03e318.up.railway.app/health
+
+## Pruebas realizadas
+
+Se realizaron pruebas funcionales mediante Postman tanto en el entorno local como en producción.
+
+Se verificaron la autenticación, el registro de usuarios, los productos, la conversión de moneda, las compras, la apertura de boosters, los torneos, las restricciones del negocio y la persistencia de información después del reinicio del servidor.
+
+## Proyecto académico
+
+Proyecto final de desarrollo de software.
+
+Institución Universitaria EAM.
+
+Cards4Play — 2026.
