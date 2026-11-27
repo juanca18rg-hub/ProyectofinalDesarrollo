@@ -7,3 +7,8 @@ target/
 .env
 /data/usuarios.json
 /data/usuarios-*.tmp
+/data/productos.json
+/data/productos-*.tmp
+/data/compras.json
+/data/compras-*.tmp
+/data/usuarios.respaldo-*.json
